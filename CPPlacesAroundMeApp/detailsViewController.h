@@ -10,26 +10,55 @@
 #import <MapKit/MapKit.h>
 #import <CoreLocation/CoreLocation.h>
 #import "customTableViewCell.h"
+#import "ViewController.h"
+#import "listViewController.h"
 
 @interface detailsViewController : UIViewController<UITableViewDelegate,UITableViewDataSource,MKMapViewDelegate,CLLocationManagerDelegate,NSXMLParserDelegate>
 {
-    NSMutableArray *placeIDArray;
+    double detailsLatitude;
+    double detailsLongitude;
     
-    NSString *currentPlaceLatitude;
-    NSString *currentPlaceLongitude;
+    
     NSString *photoRef;
-    double widthPhoto;
+    NSString *CurrentStatus;
+    
+    int widthPhoto;
+    
+    
     NSXMLParser *parser;
+    
     NSMutableArray *placeDetailsList;
+    NSMutableArray *reviewsList;
+    
     NSMutableDictionary *placeDetailsDictionary;
-    NSString *DataString;
+    NSMutableDictionary *reviewsDictionary;
+    
+    NSString *detailDataString;
+    NSString *reviewString;
+    
+
     
 
 }
-@property (strong, nonatomic) IBOutlet UILabel *nameLabel;
-@property (strong, nonatomic) IBOutlet UILabel *TimingLabel;
+
+@property (strong, nonatomic) IBOutlet UILabel *titleLabel;
+@property (strong, nonatomic) IBOutlet UILabel *contactNoLabel;
+@property (strong, nonatomic) IBOutlet UILabel *statusLabel;
 @property (strong, nonatomic) IBOutlet UILabel *addressLabel;
-@property (strong, nonatomic) IBOutlet UILabel *contactLabel;
+
+
+
+
+
+
+
+
+
+
+- (IBAction)doneAction:(id)sender;
+
+
+
 @property (strong, nonatomic) IBOutlet UITableView *detailsTableView;
 
 @property NSString *selectedPlaceID;
@@ -37,6 +66,8 @@
 @property NSString *selectedPlaceLng;
 @property NSString *selectedPhotoReference;
 @property NSString *selectedPhotoWidth;
+@property NSString *selectedPlaceStatus;
+
 
 @property (strong, nonatomic) IBOutlet UIImageView *placeImageView;
 @property (strong, nonatomic) IBOutlet MKMapView *placeMapView;

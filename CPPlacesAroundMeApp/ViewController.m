@@ -59,62 +59,62 @@
                  @"funeral_home",
                  @"furniture_store",
                  @"gas_station",
-                 @"general_contractor (deprecated)",
-                 @"grocery_or_supermarket (deprecated)",
-                 @"gym",
-                 @"hair_care",
-                 @"hardware_store",
-                 @"health (deprecated)",
-                 @"hindu_temple",
-                 @"home_goods_store",
-                 @"hospital",
-                 @"insurance_agency",
-                 @"jewelry_store",
-                 @"laundry",
+                 @"general contractor (deprecated)",
+                 @"grocery or supermarket (deprecated)",
+                 @"Gym",
+                 @"Hair care",
+                 @"Hardware store",
+                 @"Health (deprecated)",
+                 @"Hindu temple",
+                 @"Home goods store",
+                 @"Hospital",
+                 @"Insurance agency",
+                 @"Jewelry store",
+                 @"Laundry",
                  @"lawyer",
-                 @"library",
-                 @"liquor_store",
-                 @"local_government_office",
-                 @"locksmith",
-                 @"lodging",
-                 @"meal_delivery",
-                 @"meal_takeaway",
-                 @"mosque",
-                 @"movie_rental",
-                 @"movie_theater",
-                 @"moving_company",
-                 @"museum",
-                 @"night_club",
-                 @"painter",
-                 @"park",
-                 @"parking",
-                 @"pet_store",
-                 @"pharmacy",
-                 @"physiotherapist",
-                 @"place_of_worship (deprecated)",
-                 @"plumber",
-                 @"police",
-                 @"post_office",
-                 @"real_estate_agency",
-                 @"restaurant",
-                 @"roofing_contractor",
-                 @"rv_park",
-                 @"school",
-                 @"shoe_store",
-                 @"shopping_mall",
-                 @"spa",
-                 @"stadium",
-                 @"storage",
-                 @"store",
-                 @"subway_station",
-                 @"synagogue",
-                 @"taxi_stand",
-                 @"train_station",
-                 @"transit_station",
-                 @"travel_agency",
-                 @"university",
-                 @"veterinary_care",
-                 @"zoo"];
+                 @"Library",
+                 @"Liquor store",
+                 @"Local government office",
+                 @"Locksmith",
+                 @"Lodging",
+                 @"Meal delivery",
+                 @"Meal takeaway",
+                 @"Mosque",
+                 @"Movie rental",
+                 @"Movie theater",
+                 @"Moving company",
+                 @"Museum",
+                 @"Night club",
+                 @"Painter",
+                 @"Park",
+                 @"Parking",
+                 @"Pet store",
+                 @"Pharmacy",
+                 @"Physiotherapist",
+                 @"Place of worship (deprecated)",
+                 @"Plumber",
+                 @"Police",
+                 @"Post office",
+                 @"Real estate agency",
+                 @"Restaurant",
+                 @"Roofing contractor",
+                 @"Rv park",
+                 @"School",
+                 @"Shoe store",
+                 @"Shopping mall",
+                 @"Spa",
+                 @"Stadium",
+                 @"Storage",
+                 @"Store",
+                 @"Subway station",
+                 @"Synagogue",
+                 @"Taxi stand",
+                 @"Train station",
+                 @"Transit station",
+                 @"Travel agency",
+                 @"University",
+                 @"Veterinary care",
+                 @"Zoo"];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -160,9 +160,12 @@
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     UITableViewCell *cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
-    
+    cell.textLabel.font = [UIFont boldSystemFontOfSize:22];
+
     cell.textLabel.text = [placeType objectAtIndex:indexPath.row];
-    
+    UIFont *myFont = [ UIFont fontWithName: @"Arial" size: 20.0 ];
+    cell.textLabel.font  = myFont;
+
     return cell;
 }
 
@@ -170,8 +173,9 @@
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     
     
-    NSString *placeTypes = [placeType objectAtIndex:indexPath.row];
-    
+    NSString *place = [placeType objectAtIndex:indexPath.row];
+    NSString* placeTypes = [place stringByReplacingOccurrencesOfString:@" " withString:@"_"];
+
     listViewController *placeListViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"listViewController"];
     
     placeListViewController.selectedPlaceType = placeTypes;

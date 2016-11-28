@@ -12,6 +12,6 @@
 
 @property (strong, nonatomic) IBOutlet UILabel *reviewerNameLabel;
 @property (strong, nonatomic) IBOutlet UILabel *reviewsLabel;
-@property (strong, nonatomic) IBOutlet UILabel *contactNoLabel;
 
+@property (strong, nonatomic) IBOutlet UILabel *reviewerContactLabel;
 @end

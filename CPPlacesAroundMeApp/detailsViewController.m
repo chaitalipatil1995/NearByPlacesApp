@@ -17,14 +17,67 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
+  
+    self.placeMapView.delegate = self;
+    
+   // [self setUp];
+    
+    self.title =[NSString stringWithFormat:@"Place Details"];
+    
     
     placeDetailsList = [[NSMutableArray alloc]init];
-    currentPlaceLatitude = self.selectedPlaceLat;
-    currentPlaceLongitude = self.selectedPlaceLng;
-    widthPhoto=self.selectedPhotoWidth.floatValue;
+    
+    reviewsList = [[NSMutableArray alloc]init];
+    
+    
+    detailsLatitude = self.selectedPlaceLat.doubleValue;
+    
+    detailsLongitude = self.selectedPlaceLng.doubleValue;
+    
+    
+    CLLocationCoordinate2D location = self.placeMapView.userLocation.coordinate;
+    MKCoordinateRegion region;
+    
+    location.latitude  = detailsLatitude;
+    location.longitude = detailsLongitude;
+    
+    MKPointAnnotation *myAnnotation =[[MKPointAnnotation alloc]init];
+    
+    myAnnotation.coordinate = location;
+    
+    [self.placeMapView addAnnotation:myAnnotation];
+    
+    region.center = location;
+    
+    
+    widthPhoto = self.selectedPhotoWidth.intValue;
+    
     photoRef = self.selectedPhotoReference;
-
+    
+    CurrentStatus= self.selectedPlaceStatus;
+    
+    
+    [self getPhotoDetailsWithAPIKey:@KGoogleAPIKey photoReference:photoRef photoWidth:widthPhoto];
+    
+    [self getPlaceListDetailsWithAPIKey:@KGoogleAPIKey placeID:self.selectedPlaceID];
+    
+    
+    
+    if ([CurrentStatus isEqualToString:@"true"]) {
+        
+        
+        self.statusLabel.text = [NSString stringWithFormat:@"Open Now"];
+    }
+    else{
+        self.statusLabel.text = [NSString stringWithFormat:@"Close Now"];
+        
+    }
+    
+    
 }
+
+
+
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -58,12 +111,6 @@
 
 
 
-/*-(void)mapView:(MKMapView *)mapView didAddAnnotationViews:(NSArray *)views {
-    
-    MKCoordinateRegion region = MKCoordinateRegionMakeWithDistance(CLLocationCoordinate2DMake(currentPlaceLatitude,currentPlaceLongitude));
-    
-    [self.placeMapView setRegion:region animated:YES];
-}*/
 
 -(void)getPlaceListDetailsWithAPIKey:(NSString *)key
                              placeID:(NSString *)placeID
@@ -82,8 +129,9 @@
     NSURLSessionDataTask *task = [mySession dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
         
         if (error) {
-            //alert
             NSLog(@"%@",error.localizedDescription);
+            [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%@",error.localizedDescription]];
+
         }
         else {
             
@@ -109,16 +157,14 @@
                     }
                 }
                 else {
-                    //alert
+                    [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%ld",(long)httpResponse.statusCode]];
                    // [self.detailsListIndicator stopAnimating];
                     
                 }
                 
             }
             else {
-                //alert
                // [self.detailsListIndicator stopAnimating];
-                
             }
         }
         
@@ -129,77 +175,84 @@
     [task resume];
     
 }
-//-(void)getPhotoDetailsWithAPIKey:(NSString *)key
-//                             photoReference:(NSString *)photoREf
-//                      photoWidth:(double)width
-//{
-//   // [self.detailsListIndicator startAnimating];
-//
-//    NSString *urlString = [NSString stringWithFormat:@"https://maps.googleapis.com/maps/api/place/photo?key=%@&photoreference=%@&maxwidth=%f",key,photoRef,width];
-//
-//
-//
-//    NSLog(@"%@",urlString);
-//
-//    NSURL *url = [NSURL URLWithString:urlString];
-//
-//    NSURLSession *mySession = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
-//
-//    NSURLSessionDataTask *task = [mySession dataTaskWithURL:url completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
-//
-//        if (error) {
-//            //alert
-//        }
-//        else {
-//
-//            if (response) {
-//
-//                NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-//
-//                if (httpResponse.statusCode == 200) {
-//
-//                    if (data) {
-//
-//                        //xml parsing
-//
-//                        parser = [[NSXMLParser alloc]initWithData:data];
-//                        parser.delegate = self;
-//                        [parser parse];
-//
-//
-//                        self.locationImage = [UIImage imageWithData:data];
-//
-//
-//                    }
-//                    else {
-//                        //alert
-//                        [self.detailsListIndicator stopAnimating];
-//
-//                    }
-//                }
-//                else {
-//                    //alert
-//                    [self.detailsListIndicator stopAnimating];
-//
-//                }
-//
-//            }
-//            else {
-//                //alert
-//                [self.detailsListIndicator stopAnimating];
-//
-//            }
-//        }
-//
-//
-//    }];
-//
-//
-//    [task resume];
-//
-//
-//
-//}
+
+-(void)getPhotoDetailsWithAPIKey:(NSString *)key
+                  photoReference:(NSString *)photoREf
+                      photoWidth:(int)width
+{
+    // [self.detailsListIndicator startAnimating];
+    
+    NSString *urlString = [NSString stringWithFormat:@"https://maps.googleapis.com/maps/api/place/photo?key=%@&photoreference=%@&maxwidth=%d",key,photoRef,width];
+    
+    
+    
+    NSLog(@"%@",urlString);
+    
+    NSURL *url = [NSURL URLWithString:urlString];
+    
+    NSURLSession *mySession = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]];
+    
+    NSURLSessionDownloadTask *myDownloadTask = [mySession downloadTaskWithURL:url completionHandler:^(NSURL * _Nullable location, NSURLResponse * _Nullable response, NSError * _Nullable error) {
+        
+        if (error) {
+            [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%@",error.localizedDescription]];
+            NSLog(@"%@",error.localizedDescription);
+            
+        }
+        else {
+            
+            if (response) {
+                
+                NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
+                
+                if (httpResponse.statusCode == 200) {
+                    
+                    
+                    NSData *imageData = [NSData dataWithContentsOfURL:location];
+                    
+                    UIImage *image = [UIImage imageWithData:imageData];
+                    
+                    [self performSelectorOnMainThread:@selector(updateImageView:) withObject:image waitUntilDone:NO];
+                }
+                else {
+                    [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%ld",(long)httpResponse.statusCode]];
+                   // NSLog(@"%ld",(long)httpResponse.statusCode);
+                   
+                    NSData *imageData = [NSData dataWithContentsOfURL:location];
+                    
+                    UIImage *image = [UIImage imageWithData:imageData];
+                    
+                    [self performSelectorOnMainThread:@selector(updateImageView:) withObject:image waitUntilDone:NO];
+                    
+                   // [self.detailsListIndicator stopAnimating];
+                    
+                }
+                
+            }
+            else {
+                //alert
+                //[self.detailsListIndicator stopAnimating];
+                
+            }
+        }
+        
+        
+    }];
+    
+    
+    [myDownloadTask resume];
+    
+    
+    
+}
+
+-(void)updateImageView:(UIImage *)image {
+    
+    self.placeImageView.image  = image;
+  //  [self.detailsListIndicator stopAnimating];
+    
+}
+
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return 1;
@@ -213,7 +266,7 @@
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
     
-    customTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Custom_Cell"];
+    customTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"review_cell"];
     
     
    // [self.detailsListIndicator stopAnimating];
@@ -228,9 +281,6 @@
     NSString *reviewerName = [tempDictionary valueForKey:@"author_name"];
     NSString *unix = [tempDictionary valueForKey:@"time"];
     NSString *reviewerText = [tempDictionary valueForKey:@"text"];
-    
-    
-    // NSString *unix = [NSString stringWithFormat:@"%@",[placeDetailsList valueForKey:@"time"]];
     
     double unixTimeStamp = unix.intValue;
     
@@ -262,7 +312,8 @@
     
     cell.reviewsLabel.text = reviewerText;
     
-    
+    cell.reviewerContactLabel.text = hoursString;
+
     
     cell.backgroundColor = [UIColor lightTextColor];
     
@@ -275,37 +326,47 @@
 
 -(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary<NSString *,NSString *> *)attributeDict {
     
+
+if ([elementName isEqualToString:@"result"]) {
     
-    if ([elementName isEqualToString:@"result"]) {
-        placeDetailsDictionary = [[NSMutableDictionary alloc]init];
-        
-    }
-    else if ([elementName isEqualToString:@"name"]) {
-        DataString = [[NSMutableString alloc]init];
-        
-    }
-    else if ([elementName isEqualToString:@"vicinity"]) {
-        DataString = [[NSMutableString alloc]init];
-    }
-    else if ([elementName isEqualToString:@"formatted_phone_number"]) {
-        DataString = [[NSMutableString alloc]init];
-    }
-    else if ([elementName isEqualToString:@"author_name"]) {
-        DataString = [[NSMutableString alloc]init];
-    }
-    else if ([elementName isEqualToString:@"time"]) {
-        DataString = [[NSMutableString alloc]init];
-    }
-    else if ([elementName isEqualToString:@"text"]) {
-        DataString = [[NSMutableString alloc]init];
-    }
+    placeDetailsDictionary = [[NSMutableDictionary alloc]init];
     
+}
+
+else if ([elementName isEqualToString:@"review"]) {
     
+    reviewsDictionary = [[NSMutableDictionary alloc]init];
+}
+
+else if ([elementName isEqualToString:@"name"]) {
+    detailDataString = [[NSMutableString alloc]init];
+    
+}
+else if ([elementName isEqualToString:@"vicinity"]) {
+    detailDataString = [[NSMutableString alloc]init];
+}
+else if ([elementName isEqualToString:@"formatted_phone_number"]) {
+    detailDataString = [[NSMutableString alloc]init];
+}
+else if ([elementName isEqualToString:@"author_name"]) {
+    
+    reviewString = [[NSMutableString alloc]init];
+}
+else if ([elementName isEqualToString:@"time"]) {
+    reviewString = [[NSMutableString alloc]init];
+}
+else if ([elementName isEqualToString:@"text"]) {
+    reviewString = [[NSMutableString alloc]init];
+}
+
+
 }
 
 -(void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string {
     
-    DataString = string;
+    detailDataString = string;
+    reviewString = string;
+    
 }
 
 -(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName {
@@ -314,61 +375,72 @@
         
         [placeDetailsList addObject:placeDetailsDictionary];
         
-        
-        
-        //[self.detailsListIndicator stopAnimating];
+        //  [self.detailsListIndicator stopAnimating];
         NSLog(@"%@",placeDetailsDictionary);
         
-        NSLog(@"%@",placeDetailsList);
+        // NSLog(@"%@",placeDetailsList);
         
+    }
+    
+    
+    else if ([elementName isEqualToString:@"review"]) {
+        
+        [reviewsList addObject:reviewsDictionary];
+        
+        //    [self.detailsListIndicator stopAnimating];
+        //    NSLog(@"%@",placeDetailsDictionary);
+        
+        //    NSLog(@"%@",placeDetailsList);
         
     }
     else if ([elementName isEqualToString:@"name"]) {
         
-        [placeDetailsDictionary setValue:DataString forKey:@"name"];
+        [placeDetailsDictionary setValue:detailDataString forKey:@"name"];
     }
     else if ([elementName isEqualToString:@"vicinity"]) {
         
-        [placeDetailsDictionary setValue:DataString forKey:@"vicinity"];
+        [placeDetailsDictionary setValue:detailDataString forKey:@"vicinity"];
         
     }
     else if ([elementName isEqualToString:@"formatted_phone_number"]) {
         
-        [placeDetailsDictionary setValue:DataString forKey:@"formatted_phone_number"];
+        [placeDetailsDictionary setValue:detailDataString forKey:@"formatted_phone_number"];
     }
     
     else if ([elementName isEqualToString:@"author_name"]) {
         
-        [placeDetailsDictionary setValue:DataString forKey:@"author_name"];
+        [reviewsDictionary setValue:reviewString forKey:@"author_name"];
         
     }
     else if ([elementName isEqualToString:@"time"]) {
         
-        [placeDetailsDictionary setValue:DataString forKey:@"time"];
+        [reviewsDictionary setValue:reviewString forKey:@"time"];
         
     }
     else if ([elementName isEqualToString:@"text"]) {
         
-        [placeDetailsDictionary setValue:DataString forKey:@"text"];
+        [reviewsDictionary setValue:reviewString forKey:@"text"];
         
     }
     
     else if([elementName isEqualToString:@"PlaceDetailsResponse"]){
-        
-        //[self.detailsListIndicator stopAnimating];
-        
         
         [self performSelectorOnMainThread:@selector(updateTableView) withObject:nil waitUntilDone:NO];
         
     }
     
     
+    self.titleLabel.text = [placeDetailsDictionary valueForKey:@"name"];
     
-    self.nameLabel.text = [placeDetailsDictionary valueForKey:@"name"];
     
     self.addressLabel.text = [placeDetailsDictionary valueForKey:@"vicinity"];
     
-    self.contactLabel.text = [placeDetailsDictionary valueForKey:@"formatted_phone_number"];
+    
+    
+    self.contactNoLabel.text = [placeDetailsDictionary valueForKey:@"formatted_phone_number"];
+    
+    //[self.detailsListIndicator stopAnimating];
+  
     
 }
 
@@ -387,54 +459,26 @@
     
 }
 
-
-
-
-
-
+- (IBAction)doneAction:(id)sender {
+    ViewController *viewController = [self.storyboard instantiateViewControllerWithIdentifier:@"ViewController"];
     
+    [self.navigationController pushViewController:viewController animated:NO];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 1;
-    
 }
--(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 1;
-}
--(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
+
+
+-(void) showAlertWithTitle:(NSString *)title
+                   message:(NSString *)message
+{
     
-    customTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"detail_cell"];
+    UIAlertController *alert=[UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *OK = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        NSLog(@"ok");
+        
+    }];
     
-   // cell.distanceLabel.text=[NSString stringWithFormat:@"%@",self.selectedPlaceID];
-    
-    //cell.distanceLabel.text = [placeIDArray addObject:[NSString stringWithFormat:@"%@",self.selectedPlaceID]];
-    
-    
-    
-    return cell;
-    
+    [alert addAction:OK];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end

@@ -20,7 +20,13 @@
     
     placeList = [[NSMutableArray alloc]init];
     
+    NSString *range = self.selectedRange;
     
+    if (range == NULL) {
+        NSLog(@"alert please select range first");
+        [self showAlertWithTitle:@"Error" message:@"Please select range first for proceed"];
+        
+    }
     
     [self getPlaceListWithGoogleAPIKey:@KGoogleAPIKey placeType:self.selectedPlaceType radius:self.selectedRange latitude:@KLatitude longitude:@KLongitude format:@"xml"];
 
@@ -89,7 +95,6 @@
     NSLog(@"%@",error.localizedDescription);
     
 }
-//gadhenilesh449@gmail.com
 
 
 
@@ -113,6 +118,8 @@
         if (error) {
             NSLog(@"error:%@",error.localizedDescription);
             
+            [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%@",error.localizedDescription]];
+
         }
         else {
             if (response) {
@@ -132,7 +139,8 @@
                     }
                 }
                 else {
-                    
+                    [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%ld",(long)httpResponse.statusCode]];
+ 
                 }
             }
             else {
@@ -142,6 +150,7 @@
     [task resume];
     
 }
+
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return  1;
     
@@ -152,55 +161,67 @@
 }
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     
-   // UITableViewCell *cell = [[UITableViewCell alloc]initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"cell"];
     listsTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"lists_cell"];
-    
-    NSDictionary *tempDictionary = [placeList objectAtIndex:indexPath.row];
-       NSLog(@"%@",tempDictionary);
+    NSLog(@"%@",placeList);
 
+
+    NSMutableDictionary *tempDictionary = [placeList objectAtIndex:indexPath.row];
     
-    NSString *address = [tempDictionary valueForKey:@"vicinity"];
+    NSLog(@"%@",tempDictionary);
+    
     NSString *placeName = [tempDictionary valueForKey:@"name"];
+    NSString *address = [tempDictionary valueForKey:@"vicinity"];
+    
+    
     
     cell.nameLabel.text = placeName;
+    
+    cell.nameLabel.textColor = [UIColor blueColor];
+    
+    cell.nameLabel.font = [UIFont boldSystemFontOfSize:16];
+   
     cell.addressLabel.text = address;
     
+    cell.addressLabel.textColor = [UIColor darkGrayColor];
     
-//    cell.textLabel.text = placeName;
-//    
-//    cell.detailTextLabel.text =address;
-
+    cell.addressLabel.font = [UIFont systemFontOfSize:15];
     
+    cell.backgroundColor = [UIColor lightTextColor];
+   
     return cell;
+    
     
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     
-    detailsViewController *detailViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"detailsViewController"];
+    detailsViewController *placeDetailViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"detailsViewController"];
     
-    NSDictionary *PlaceDetailDictionary = [placeList objectAtIndex:indexPath.row];
+    NSDictionary *placeDic = [placeList objectAtIndex:indexPath.row];
     
-    NSString *place_id = [PlaceDetailDictionary valueForKey:@"place_id"];
-    NSString *placeLatitude = [PlaceDetailDictionary valueForKey:@"lat"];
-    NSString *placeLongitude = [PlaceDetailDictionary valueForKey:@"lng"];
-    NSString *photoReference = [PlaceDetailDictionary valueForKey:@"photo_reference"];
-    NSString *width = [PlaceDetailDictionary valueForKey:@"width"];
+    NSString *place_id = [placeDic valueForKey:@"place_id"];
+    
+    NSString *latitudes = [placeDic valueForKey:@"lat"];
+    NSString *longitudes = [placeDic valueForKey:@"lng"];
+    NSString *photoReference = [placeDic valueForKey:@"photo_reference"];
+    NSString *width = [placeDic valueForKey:@"width"];
+    NSString *status = [placeDic valueForKey:@"open_now"];
     
     
     
-    detailViewController.selectedPlaceID = place_id;
-    detailViewController.selectedPlaceLat = placeLatitude;
-    detailViewController.selectedPlaceLng = placeLongitude;
-    detailViewController.selectedPhotoReference = photoReference;
-    detailViewController.selectedPhotoWidth = width;
-
-    //[self startDetectingLocation];
-
-    [self.navigationController pushViewController:detailViewController animated:YES];
+    placeDetailViewController.selectedPlaceID = place_id;
+    placeDetailViewController.selectedPlaceLat = latitudes;
+    placeDetailViewController.selectedPlaceLng = longitudes;
+    placeDetailViewController.selectedPhotoReference = photoReference;
+    placeDetailViewController.selectedPhotoWidth = width;
+    placeDetailViewController.selectedPlaceStatus = status;
     
+    
+    
+    [self.navigationController pushViewController:placeDetailViewController animated:YES];
     
 }
+
 
 
 -(void)parser:(NSXMLParser *)parser didStartElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName attributes:(NSDictionary<NSString *,NSString *> *)attributeDict{
@@ -217,7 +238,7 @@
     else if ([elementName isEqualToString:@"place_id"]){
         dataString = [[NSMutableString alloc]init];
     }
-    else if ([elementName isEqualToString:@"place_id"]) {
+    else if ([elementName isEqualToString:@"rating"]) {
         dataString = [[NSMutableString alloc]init];
     }
     else if ([elementName isEqualToString:@"lat"]) {
@@ -234,6 +255,10 @@
     else if ([elementName isEqualToString:@"width"]) {
         dataString = [[NSMutableString alloc]init];
     }
+    else if ([elementName isEqualToString:@"open_now"]) {
+        dataString = [[NSMutableString alloc]init];
+    }
+    
     
 
         
@@ -241,7 +266,7 @@
 
 -(void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string{
     
-    dataString = string;
+    dataString = [string mutableCopy];
     
 }
 
@@ -283,6 +308,16 @@
         [placesDictionary setValue:dataString forKey:@"width"];
         
     }
+    else if ([elementName isEqualToString:@"rating"]) {
+        
+        [placesDictionary setValue:dataString forKey:@"rating"];
+        
+    }
+    else if ([elementName isEqualToString:@"open_now"]) {
+        
+        [placesDictionary setValue:dataString forKey:@"open_now"];
+        
+    }
 
     else if ([elementName isEqualToString:@"PlaceSearchResponse"]){
         
@@ -293,11 +328,29 @@
 -(void)parser:(NSXMLParser *)parser parseErrorOccurred:(NSError *)parseError{
     
     NSLog(@"parser Error:%@",parseError.localizedDescription);
+    [self showAlertWithTitle:@"Error" message:[NSString stringWithFormat:@"%@",parseError.localizedDescription]];
+
 }
 
 -(void)updateDetailsTableView{
     
     [self.listsTableView reloadData];
-
+    
 }
+
+
+-(void) showAlertWithTitle:(NSString *)title
+                   message:(NSString *)message
+{
+    
+    UIAlertController *alert=[UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *OK = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        NSLog(@"ok");
+        
+    }];
+    
+    [alert addAction:OK];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
 @end
